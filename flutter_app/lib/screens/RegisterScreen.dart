@@ -24,11 +24,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
         return AlertDialog(
           backgroundColor: Colors.black.withOpacity(0.8),
           title: Text(
-            'Account Created!',
+            'Account Created! test', //debug
             style: TextStyle(color: Colors.orange),
           ),
           content: Text(
-            'Your Fire Fitness account has been successfully created.',
+            'Your Fire Fitness account has been successfully created. test', //debug
             style: TextStyle(color: Colors.white),
           ),
           actions: [
@@ -40,6 +40,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
               onPressed: () {
                 Navigator.of(context).pop(); // Close dialog
                 Navigator.of(context).pop(); // Return to login
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showFailDialog(BuildContext context, [var code = 0, String response = '']) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.black.withOpacity(0.8),
+          title: Text(
+            'Account Creation Failed error code: ${code}',
+            style: TextStyle(color: Colors.orange),
+          ),
+          content: Text(
+            'Your Fire Fitness account failed to create!\n${response}',
+            style: TextStyle(color: Colors.white),
+          ),
+          actions: [
+            TextButton(
+              child: Text(
+                'OK',
+                style: TextStyle(color: Colors.orange),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close dialog
               },
             ),
           ],
@@ -273,7 +303,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 if (_formKey.currentState!.validate()) {
                                   var res = await API.APICall('/register', '{"email": "${email}",\n"password": "${password}",\n "name": "${name}"}');
                                   // Just gives success Dialogue currently, need to add fail
-                                  _showSuccessDialog(context);
+                                  if (res == null) {
+                                    _showFailDialog(context);
+                                  } else if (res['code'] != 200) {
+                                    _showFailDialog(context, res['code'], res['response']);
+                                  } else {
+                                    _showSuccessDialog(context);
+                                  }
                                 }
                               },
                               style: ElevatedButton.styleFrom(

@@ -9,6 +9,7 @@ class Routes {
   static const String LOGINSCREEN = '/login';
   static const String REGISTER_SCREEN = '/register';  
   static const String CARDSSCREEN = '/cards';
+  static const String FORGOT_PASSWORD_SCREEN = '/cards';
 
   // Define a map of routes
   static Map<String, Widget Function(BuildContext)> get getroutes => {

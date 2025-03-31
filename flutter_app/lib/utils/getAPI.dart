@@ -21,10 +21,15 @@ class API {
         // Decode the JSON response body into a Map
         Map<String, dynamic> data = jsonDecode(response.body);
         data['code'] = statusCode; //for frontend changes on fail
+        data['response'] = response.body;
         return data;
       } else {
         print('Request failed with status: ${response.statusCode}');
         print(response.body);
+        return {
+          'code': response.statusCode,
+          'response': response.body,
+        };
       }
     } catch (e) {
       print('Error making API call: ${e}');
