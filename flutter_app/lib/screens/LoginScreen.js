@@ -55,7 +55,7 @@ export default class Homescreen extends Component {
       var obj = { login: global.loginName.trim(), password: global.password.trim() };
       var js = JSON.stringify(obj);
 
-      const response = await fetch('https://cop4331-10.herokuapp.com/api/login', {
+      const response = await fetch('http://localhost:8000/login', {
         method: 'POST',
         body: js,
         headers: { 'Content-Type': 'application/json' },

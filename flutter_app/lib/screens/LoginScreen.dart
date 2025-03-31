@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app/utils/getAPI.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -166,8 +167,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: () {
-                              Navigator.pushNamed(context, '/cards');
+                            onPressed: () async {
+                              var res = await API.APICall('/login', '{"email": "${loginName}",\n"password": "${password}"}'); //contacts api on host comp (vs emulator)
+
+                              if(res == null || res['id'] == -1) {
+                                print("bad login/api fail");
+                              } else {
+                                Navigator.pushNamed(context, '/cards');
+                              }
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.transparent,

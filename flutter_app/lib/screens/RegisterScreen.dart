@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app/utils/getAPI.dart';
 
 class RegisterScreen extends StatefulWidget {
   @override
@@ -6,7 +7,7 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  String email = '', password = '', confirmPassword = '';
+  String email = '', password = '', confirmPassword = '', name = '';
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   final _formKey = GlobalKey<FormState>();
@@ -161,6 +162,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             onChanged: (text) => email = text,
                           ),
                           SizedBox(height: 20),
+
+                          //Name Field
+                          TextFormField(
+                            style: TextStyle(color: Colors.white),
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: Colors.black.withOpacity(0.5),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: BorderSide(color: Colors.orange),
+                              ),
+                              labelText: 'Name',
+                              labelStyle: TextStyle(color: Colors.orange),
+                              prefixIcon: Icon(Icons.account_box_rounded, color: Colors.orange),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter your name';
+                              }
+                              return null;
+                            },
+                            onChanged: (text) => name = text,
+                          ),
+                          SizedBox(height: 20),
                           
                           // Password Field
                           TextFormField(
@@ -244,10 +269,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
-                              onPressed: () {
+                              onPressed: () async {
                                 if (_formKey.currentState!.validate()) {
-                                  // Would call Reigistration API here......
-                                  // Just gives success Dialogue currently
+                                  var res = await API.APICall('/register', '{"email": "${email}",\n"password": "${password}",\n "name": "${name}"}');
+                                  // Just gives success Dialogue currently, need to add fail
                                   _showSuccessDialog(context);
                                 }
                               },

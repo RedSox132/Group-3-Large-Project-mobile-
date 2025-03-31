@@ -1,9 +1,11 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-class CardsData {
-  static Future<String> getJson(String url, String outgoing) async {
-    String ret = "";
+class API {
+
+  static Future<Map<String, dynamic>?> APICall(String dir, String outgoing) async {
+    String url = "http://10.0.2.2:8000${dir}";
+    print(outgoing); //debug
     try {
       http.Response response = await http.post(
         Uri.parse(url),
@@ -14,10 +16,19 @@ class CardsData {
         },
         encoding: Encoding.getByName("utf-8"),
       );
-      ret = response.body;
+      var statusCode = response.statusCode;
+      if (statusCode == 200) {
+        // Decode the JSON response body into a Map
+        Map<String, dynamic> data = jsonDecode(response.body);
+        data['code'] = statusCode; //for frontend changes on fail
+        return data;
+      } else {
+        print('Request failed with status: ${response.statusCode}');
+        print(response.body);
+      }
     } catch (e) {
-      print(e.toString());
+      print('Error making API call: ${e}');
     }
-    return ret;
+    return null;
   }
 }
