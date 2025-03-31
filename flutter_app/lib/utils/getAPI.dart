@@ -20,7 +20,7 @@ class API {
       if (statusCode == 200) {
         // Decode the JSON response body into a Map
         Map<String, dynamic> data = jsonDecode(response.body);
-        data['code'] = statusCode; //for frontend changes on fail
+        data['code'] = statusCode;
         data['response'] = response.body;
         return data;
       } else {

@@ -10,6 +10,36 @@ class _LoginScreenState extends State<LoginScreen> {
   String loginName = '', password = '';
   bool _obscurePassword = true;
 
+  void _showFailDialog(BuildContext context, [var code = 0, String response = '']) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.black.withOpacity(0.8),
+          title: Text(
+            'Login Failed error code: ${code}',
+            style: TextStyle(color: Colors.orange),
+          ),
+          content: Text(
+            'Failed to login in to your account!\n${response}',
+            style: TextStyle(color: Colors.white),
+          ),
+          actions: [
+            TextButton(
+              child: Text(
+                'OK',
+                style: TextStyle(color: Colors.orange),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close dialog
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -170,8 +200,10 @@ class _LoginScreenState extends State<LoginScreen> {
                             onPressed: () async {
                               var res = await API.APICall('/login', '{"email": "${loginName}",\n"password": "${password}"}'); //contacts api on host comp (vs emulator)
 
-                              if(res == null || res['id'] == -1) {
-                                print("bad login/api fail");
+                              if (res == null) {
+                                _showFailDialog(context);
+                              } else if (res['code'] != 200) {
+                                _showFailDialog(context, res['code'], res['response']);
                               } else {
                                 Navigator.pushNamed(context, '/cards');
                               }
