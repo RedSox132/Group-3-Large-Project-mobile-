@@ -17,11 +17,41 @@ class _LoginScreenState extends State<LoginScreen> {
         return AlertDialog(
           backgroundColor: Colors.black.withOpacity(0.8),
           title: Text(
-            'Login Failed error code: ${code}',
+            'Error code: ${code}',
             style: TextStyle(color: Colors.orange),
           ),
           content: Text(
-            'Failed to login in to your account!\n${response}',
+            'Failed to complete action:\n${response}',
+            style: TextStyle(color: Colors.white),
+          ),
+          actions: [
+            TextButton(
+              child: Text(
+                'OK',
+                style: TextStyle(color: Colors.orange),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close dialog
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showSuccessDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.black.withOpacity(0.8),
+          title: Text(
+            'Check Email!',
+            style: TextStyle(color: Colors.orange),
+          ),
+          content: Text(
+            'Follow Directions in email to reset password!',
             style: TextStyle(color: Colors.white),
           ),
           actions: [
@@ -141,7 +171,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               borderRadius: BorderRadius.circular(10),
                               borderSide: BorderSide(color: Colors.red),
                             ),
-                            labelText: 'Username',
+                            labelText: 'Email',
                             labelStyle: TextStyle(color: Colors.orange),
                             prefixIcon: Icon(Icons.person, color: Colors.orange),
                           ),
@@ -295,8 +325,16 @@ class _LoginScreenState extends State<LoginScreen> {
                   
                   // Forgot Password Link
                   TextButton(
-                    onPressed: () {
+                    onPressed: () async {
                       // Add forgot password functionality
+                      var res = await API.APICall('/forgotPassword', '{"email": "${loginName}"}');
+                      if (res == null) {
+                        _showFailDialog(context);
+                      } else if (res['code'] != 200) {
+                        _showFailDialog(context, res['code'], res['response']);
+                      } else {
+                        _showSuccessDialog(context);
+                      }
                     },
                     child: Text(
                       'Forgot Password?',

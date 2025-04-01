@@ -4,7 +4,7 @@ import 'dart:convert';
 class API {
 
   static Future<Map<String, dynamic>?> APICall(String dir, String outgoing) async {
-    String url = "http://10.0.2.2:8000${dir}";
+    String url = "http://firefitapp.com/api${dir}";
     print(outgoing); //debug
     try {
       http.Response response = await http.post(
@@ -19,7 +19,15 @@ class API {
       var statusCode = response.statusCode;
       if (statusCode == 200) {
         // Decode the JSON response body into a Map
-        Map<String, dynamic> data = jsonDecode(response.body);
+        Map<String, dynamic> data = <String, dynamic>{};
+        try {
+          final parsed = jsonDecode(response.body);
+          if(parsed is Map<String, dynamic>) {
+            data = parsed;
+          }
+        } catch (a) {
+          data['error'] = 'Failed to parse JSON: ${a}';
+        }
         data['code'] = statusCode;
         data['response'] = response.body;
         return data;
