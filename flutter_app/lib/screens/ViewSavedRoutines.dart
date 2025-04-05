@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_app/screens/Workouts.dart';
+
 
 
 class Routine {
@@ -134,7 +136,15 @@ class _ViewSavedRoutinesState extends State<ViewSavedRoutines> {
                       onPressed: () => deleteRoutine(routine.routineId),
                     ),
                     onTap: () {
-                      // Handle tap to view or edit routine if needed
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => WorkoutsScreen(
+                            routineId: routine.routineId,
+                            routineName: routine.name,
+                          ),
+                        ),
+                      );
                     },
                   ),
                 );
