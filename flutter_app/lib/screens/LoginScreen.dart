@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/utils/getAPI.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -235,6 +236,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               } else if (res['code'] != 200) {
                                 _showFailDialog(context, res['code'], res['response']);
                               } else {
+                                // Save userId
+                                final prefs = await SharedPreferences.getInstance();
+                                await prefs.setString('userId', res['id']);
                                 Navigator.pushNamed(context, '/cards');
                               }
                             },
@@ -327,12 +331,25 @@ class _LoginScreenState extends State<LoginScreen> {
                   TextButton(
                     onPressed: () async {
                       // Add forgot password functionality
+                      if (loginName.trim().isEmpty) {
+                        print('No email entered.');
+                        _showFailDialog(context, 400, 'Please enter your email address first.');
+                        return;
+                      }
+                      print('Sending forgot password request for: $loginName');
+
                       var res = await API.APICall('/forgotPassword', '{"email": "${loginName}"}');
+
+                      print('Response from API: $res');
+
                       if (res == null) {
+                        print('API returned null');
                         _showFailDialog(context);
                       } else if (res['code'] != 200) {
+                        print('API returned error: ${res['code']}');
                         _showFailDialog(context, res['code'], res['response']);
                       } else {
+                        print('Success!');
                         _showSuccessDialog(context);
                       }
                     },
