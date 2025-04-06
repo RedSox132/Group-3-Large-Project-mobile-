@@ -145,7 +145,28 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                           ),
                         IconButton(
                           icon: Icon(Icons.delete, color: Colors.redAccent),
-                          onPressed: () => deleteWorkout(workout['workoutId']),
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (_) => AlertDialog(
+                                  title: Text('Confirm Delete'),
+                                  content: Text('Are you sure you want to delete this workout?'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      child: Text('Cancel'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                        deleteWorkout(workout['workoutId']);
+                                      },
+                                      child: Text('Delete', style: TextStyle(color: Colors.red)),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
                         ),
                       ],
                     ),

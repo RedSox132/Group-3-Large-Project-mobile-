@@ -48,6 +48,46 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
     }
   }
 
+  Future<void> deleteExercise(String exerciseId) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('http://firefitapp.com/api/deleteExercise?exerciseId=$exerciseId'),
+      );
+      if (response.statusCode == 200) {
+        setState(() {
+          exercises.removeWhere((exercise) => exercise['exerciseId'] == exerciseId);
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to delete exercise')));
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+    }
+  }
+
+  void confirmDeleteExercise(String exerciseId) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text('Confirm Delete'),
+        content: Text('Are you sure you want to delete this exercise?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              deleteExercise(exerciseId);
+            },
+            child: Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> showAddExerciseDialog() async {
     final _nameController = TextEditingController();
     final _setsController = TextEditingController();
@@ -191,6 +231,10 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                   subtitle: Text(
                     'Sets: ${exercise['sets']}, Reps: ${exercise['reps']}, Weight: ${exercise['weight']} lbs',
                     style: TextStyle(color: Colors.orange[100]),
+                  ),
+                  trailing: IconButton(
+                    icon: Icon(Icons.delete, color: Colors.redAccent),
+                    onPressed: () => confirmDeleteExercise(exercise['exerciseId']),
                   ),
                 ),
               );

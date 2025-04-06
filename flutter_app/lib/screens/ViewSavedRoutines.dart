@@ -133,7 +133,28 @@ class _ViewSavedRoutinesState extends State<ViewSavedRoutines> {
                     subtitle: Text(routine.description, style: TextStyle(color: Colors.orange[100])),
                     trailing: IconButton(
                       icon: Icon(Icons.delete, color: Colors.redAccent),
-                      onPressed: () => deleteRoutine(routine.routineId),
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (_) => AlertDialog(
+                              title: Text('Confirm Delete'),
+                              content: Text('Are you sure you want to delete this routine?'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: Text('Cancel'),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                    deleteRoutine(routine.routineId);
+                                  },
+                                  child: Text('Delete', style: TextStyle(color: Colors.red)),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
                     ),
                     onTap: () {
                       Navigator.push(
