@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_app/screens/Exercises.dart';
+
 
 class WorkoutsScreen extends StatefulWidget {
   final String routineId;
@@ -49,9 +51,23 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
     }
   }
 
+  Future<void> deleteWorkout(String workoutId) async {
+    try {
+      final response = await http.delete(Uri.parse('http://firefitapp.com/api/deleteWorkout?workoutId=$workoutId'));
+      if (response.statusCode == 200) {
+        setState(() {
+          workouts.removeWhere((workout) => workout['workoutId'] == workoutId);
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to delete workout')));
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+    }
+  }
+
   void onAddWorkout() {
-    // Placeholder for future add workout logic
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Add workout tapped')));
+    showAddWorkoutDialog(context, widget.routineId, fetchWorkouts);
   }
 
   @override
@@ -97,6 +113,17 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                   ),
                   margin: EdgeInsets.only(bottom: 16),
                   child: ListTile(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ExercisesScreen(
+                            workoutId: workout['workoutId'],
+                            workoutName: workout['name'],
+                          ),
+                        ),
+                      );
+                    },
                     title: Text(
                       workout['name'],
                       style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
@@ -105,12 +132,23 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                       workout['description'] ?? '',
                       style: TextStyle(color: Colors.orange[100]),
                     ),
-                    trailing: workout['date'] != null
-                        ? Text(
-                      workout['date'],
-                      style: TextStyle(color: Colors.orangeAccent, fontSize: 12),
-                    )
-                        : null,
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (workout['date'] != null)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 8.0),
+                            child: Text(
+                              formatDate(workout['date']),
+                              style: TextStyle(color: Colors.orangeAccent, fontSize: 12),
+                            ),
+                          ),
+                        IconButton(
+                          icon: Icon(Icons.delete, color: Colors.redAccent),
+                          onPressed: () => deleteWorkout(workout['workoutId']),
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },
@@ -140,5 +178,102 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
         ],
       ),
     );
+  }
+}
+
+Future<void> showAddWorkoutDialog(BuildContext context, String routineId, Function onSuccess) async {
+  final _nameController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  String message = '';
+  bool isSubmitting = false;
+
+  await showDialog(
+    context: context,
+    barrierDismissible: true,
+    builder: (ctx) {
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            backgroundColor: Colors.black87,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Text('Add Workout', style: TextStyle(color: Colors.orange)),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: _nameController,
+                  style: TextStyle(color: Colors.white),
+                  decoration: InputDecoration(labelText: 'Name', labelStyle: TextStyle(color: Colors.orange)),
+                ),
+                SizedBox(height: 10),
+                TextField(
+                  controller: _descriptionController,
+                  style: TextStyle(color: Colors.white),
+                  decoration: InputDecoration(labelText: 'Description', labelStyle: TextStyle(color: Colors.orange)),
+                ),
+                SizedBox(height: 10),
+                if (message.isNotEmpty)
+                  Text(message, style: TextStyle(color: Colors.redAccent), textAlign: TextAlign.center),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Cancel', style: TextStyle(color: Colors.orange)),
+              ),
+              ElevatedButton(
+                onPressed: isSubmitting
+                    ? null
+                    : () async {
+                  final name = _nameController.text.trim();
+                  final description = _descriptionController.text.trim();
+                  if (name.isEmpty || description.isEmpty) {
+                    setState(() => message = 'Both fields are required');
+                    return;
+                  }
+
+                  setState(() => isSubmitting = true);
+
+                  final prefs = await SharedPreferences.getInstance();
+                  final userId = prefs.getString('userId');
+
+                  final response = await http.post(
+                    Uri.parse('http://firefitapp.com/api/addWorkout'),
+                    headers: {"Content-Type": "application/json"},
+                    body: jsonEncode({
+                      "userId": userId,
+                      "routineId": routineId,
+                      "name": name,
+                      "description": description,
+                      "date": DateTime.now().toIso8601String().split('T').first,
+                    }),
+                  );
+
+                  setState(() => isSubmitting = false);
+
+                  if (response.statusCode == 200) {
+                    Navigator.pop(context);
+                    onSuccess();
+                  } else {
+                    setState(() => message = 'Failed to add workout');
+                  }
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+                child: Text(isSubmitting ? 'Submitting...' : 'Add'),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
+
+String formatDate(String isoDate) {
+  try {
+    final date = DateTime.parse(isoDate);
+    return '${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}/${date.year}';
+  } catch (e) {
+    return isoDate;
   }
 }
