@@ -19,11 +19,26 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
   List<dynamic> workouts = [];
   bool isLoading = true;
   String message = '';
+  TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
     fetchWorkouts();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<dynamic> get filteredWorkouts {
+    if (_searchQuery.isEmpty) return workouts;
+    return workouts.where((w) =>
+        w['name'].toLowerCase().contains(_searchQuery.toLowerCase())
+    ).toList();
   }
 
   Future<void> fetchWorkouts() async {
@@ -101,78 +116,115 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
           )
               : Padding(
             padding: const EdgeInsets.all(16.0),
-            child: ListView.builder(
-              itemCount: workouts.length,
-              itemBuilder: (context, index) {
-                final workout = workouts[index];
-                return Card(
-                  color: Colors.black.withOpacity(0.5),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    side: BorderSide(color: Colors.orange.withOpacity(0.7)),
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 0.0, vertical: 8.0),
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (value) {
+                      setState(() {
+                        _searchQuery = value;
+                      });
+                    },
+                    style: TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      hintText: 'Search workouts...',
+                      hintStyle: TextStyle(color: Colors.orange[100]),
+                      prefixIcon: Icon(Icons.search, color: Colors.orangeAccent),
+                      filled: true,
+                      fillColor: Colors.black54,
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: Colors.orangeAccent),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: Colors.deepOrange),
+                      ),
+                    ),
                   ),
-                  margin: EdgeInsets.only(bottom: 16),
-                  child: ListTile(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ExercisesScreen(
-                            workoutId: workout['workoutId'],
-                            workoutName: workout['name'],
+                ),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: filteredWorkouts.length,
+                    itemBuilder: (context, index) {
+                      final workout = filteredWorkouts[index];
+                      return Card(
+                        color: Colors.black.withOpacity(0.5),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          side: BorderSide(color: Colors.orange.withOpacity(0.7)),
+                        ),
+                        margin: EdgeInsets.only(bottom: 16),
+                        child: ListTile(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ExercisesScreen(
+                                  workoutId: workout['workoutId'],
+                                  workoutName: workout['name'],
+                                ),
+                              ),
+                            );
+                          },
+                          title: Text(
+                            workout['name'],
+                            style: TextStyle(
+                                color: Colors.white, fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Text(
+                            workout['description'] ?? '',
+                            style: TextStyle(color: Colors.orange[100]),
+                          ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (workout['date'] != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 8.0),
+                                  child: Text(
+                                    formatDate(workout['date']),
+                                    style: TextStyle(
+                                        color: Colors.orangeAccent, fontSize: 12),
+                                  ),
+                                ),
+                              IconButton(
+                                icon: Icon(Icons.delete, color: Colors.redAccent),
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (_) => AlertDialog(
+                                      title: Text('Confirm Delete'),
+                                      content: Text(
+                                          'Are you sure you want to delete this workout?'),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(context),
+                                          child: Text('Cancel'),
+                                        ),
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.pop(context);
+                                            deleteWorkout(workout['workoutId']);
+                                          },
+                                          child: Text('Delete',
+                                              style: TextStyle(color: Colors.red)),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
                           ),
                         ),
                       );
                     },
-                    title: Text(
-                      workout['name'],
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Text(
-                      workout['description'] ?? '',
-                      style: TextStyle(color: Colors.orange[100]),
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (workout['date'] != null)
-                          Padding(
-                            padding: const EdgeInsets.only(right: 8.0),
-                            child: Text(
-                              formatDate(workout['date']),
-                              style: TextStyle(color: Colors.orangeAccent, fontSize: 12),
-                            ),
-                          ),
-                        IconButton(
-                          icon: Icon(Icons.delete, color: Colors.redAccent),
-                            onPressed: () {
-                              showDialog(
-                                context: context,
-                                builder: (_) => AlertDialog(
-                                  title: Text('Confirm Delete'),
-                                  content: Text('Are you sure you want to delete this workout?'),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context),
-                                      child: Text('Cancel'),
-                                    ),
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.pop(context);
-                                        deleteWorkout(workout['workoutId']);
-                                      },
-                                      child: Text('Delete', style: TextStyle(color: Colors.red)),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                        ),
-                      ],
-                    ),
                   ),
-                );
-              },
+                ),
+              ],
             ),
           ),
           Positioned(
